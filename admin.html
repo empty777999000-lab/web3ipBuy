@@ -3,421 +3,428 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NetGuard | Admin Dashboard</title>
+    <title>NetGuard | Ultimate Command Center</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
         :root {
+            --bg-dark: #020617;
+            --sidebar-bg: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.4);
+            --border: 1px solid rgba(148, 163, 184, 0.1);
             --primary: #6366f1;
-            --primary-hover: #4f46e5;
-            --bg-dark: #0f172a;
-            --card-bg: rgba(30, 41, 59, 0.7);
-            --border: 1px solid rgba(255, 255, 255, 0.1);
-            --text-light: #f8fafc;
-            --text-gray: #94a3b8;
+            --primary-glow: rgba(99, 102, 241, 0.3);
             --success: #10b981;
-            --error: #ef4444;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
         
         body {
             background-color: var(--bg-dark);
-            color: var(--text-light);
+            color: var(--text-main);
+            display: flex;
             min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: var(--sidebar-bg);
+            border-right: var(--border);
+            padding: 30px;
             display: flex;
-            justify-content: center;
-            align-items: center;
-            background-image: radial-gradient(circle at top right, #1e1b4b, transparent), radial-gradient(circle at bottom left, #312e81, transparent);
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            z-index: 10;
         }
-
-        .dashboard-container {
-            width: 100%;
-            max-width: 900px;
-            padding: 20px;
+        
+        .brand {
+            font-size: 1.5rem; font-weight: 800; color: white; display: flex; align-items: center; gap: 10px; margin-bottom: 40px;
+            text-shadow: 0 0 20px var(--primary-glow);
         }
-
-        /* Header */
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            padding: 20px;
-            background: var(--card-bg);
-            backdrop-filter: blur(12px);
-            border-radius: 16px;
-            border: var(--border);
-        }
-
-        .brand { font-size: 1.5rem; font-weight: 700; display: flex; align-items: center; gap: 10px; }
         .brand i { color: var(--primary); }
 
-        .connect-btn {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 10px;
-            font-weight: 600;
+        .nav-item {
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            border-radius: 12px;
+            color: var(--text-muted);
             cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            transition: 0.3s;
+            display: flex; align-items: center; gap: 12px; font-weight: 500;
         }
-        .connect-btn:hover { background: var(--primary-hover); transform: translateY(-2px); }
-        .connect-btn.connected { background: rgba(99, 102, 241, 0.2); color: var(--primary); border: 1px solid var(--primary); }
-
-        /* Grid Layout */
-        .admin-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
+        .nav-item:hover, .nav-item.active {
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--primary);
+            border: 1px solid rgba(99, 102, 241, 0.2);
         }
 
+        /* Main Content */
+        .main-content {
+            margin-left: 280px;
+            flex: 1;
+            padding: 40px;
+        }
+
+        .header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px;
+        }
+        .header h2 { font-size: 2rem; font-weight: 700; }
+        
+        .connect-btn {
+            background: var(--primary); color: white; border: none; padding: 12px 25px; border-radius: 50px;
+            font-weight: 600; cursor: pointer; box-shadow: 0 4px 20px var(--primary-glow); transition: 0.3s;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .connect-btn:hover { transform: translateY(-2px); }
+        .connect-btn.connected { background: #1e293b; border: 1px solid var(--primary); color: var(--primary); }
+
+        /* Sections */
+        .section { display: none; animation: fadeIn 0.4s ease; }
+        .section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
+        
         .card {
             background: var(--card-bg);
-            backdrop-filter: blur(12px);
-            border-radius: 16px;
+            backdrop-filter: blur(20px);
             border: var(--border);
-            padding: 25px;
+            border-radius: 20px;
+            padding: 30px;
         }
-
-        h3 { margin-bottom: 20px; font-size: 1.1rem; color: var(--text-gray); text-transform: uppercase; letter-spacing: 1px; }
-
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 8px; font-size: 0.9rem; color: var(--text-gray); }
+        .card h3 { margin-bottom: 20px; font-size: 1.1rem; color: var(--text-muted); display: flex; align-items: center; gap: 10px; }
+        
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; color: var(--text-muted); font-size: 0.9rem; }
         
         input, select {
-            width: 100%;
-            padding: 12px;
-            background: rgba(15, 23, 42, 0.6);
-            border: var(--border);
-            border-radius: 10px;
-            color: white;
-            outline: none;
-            transition: 0.3s;
+            width: 100%; padding: 14px; background: #020617; border: var(--border); border-radius: 12px;
+            color: white; outline: none; transition: 0.3s; font-size: 1rem;
         }
-        input:focus { border-color: var(--primary); }
+        input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1); }
 
-        .action-btn {
-            width: 100%;
-            padding: 14px;
-            border-radius: 10px;
-            border: none;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.3s;
-            margin-top: 10px;
-        }
-        .btn-blue { background: var(--primary); color: white; }
-        .btn-blue:hover { background: var(--primary-hover); }
-        
-        .btn-green { background: var(--success); color: white; }
-        .btn-green:hover { background: #059669; }
+        /* Buttons */
+        .btn-action { width: 100%; padding: 14px; border-radius: 12px; border: none; font-weight: 600; cursor: pointer; transition: 0.3s; display: flex; justify-content: center; align-items: center; gap: 8px; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: #4f46e5; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-success:hover { background: #059669; }
+        .btn-danger { background: rgba(239, 68, 68, 0.1); border: 1px solid var(--danger); color: var(--danger); }
+        .btn-danger:hover { background: var(--danger); color: white; }
+        .btn-warning { background: rgba(245, 158, 11, 0.1); border: 1px solid var(--warning); color: var(--warning); }
+        .btn-warning:hover { background: var(--warning); color: #000; }
 
-        .btn-red { background: rgba(239, 68, 68, 0.1); color: var(--error); border: 1px solid var(--error); }
-        .btn-red:hover { background: var(--error); color: white; }
-
-        /* Toast Notification */
+        /* Toast */
         .toast {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            background: white;
-            color: #0f172a;
-            padding: 15px 25px;
-            border-radius: 10px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            transform: translateY(100px);
-            opacity: 0;
-            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-            z-index: 1000;
-            font-weight: 600;
+            position: fixed; bottom: 30px; right: 30px; background: #1e293b; color: white; padding: 16px 24px;
+            border-radius: 12px; border-left: 5px solid var(--primary); box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            transform: translateY(100px); opacity: 0; transition: 0.4s; z-index: 100; display: flex; align-items: center; gap: 12px;
         }
         .toast.show { transform: translateY(0); opacity: 1; }
-        .toast.success { border-left: 5px solid var(--success); }
-        .toast.error { border-left: 5px solid var(--error); }
 
-        /* Loading Spinner */
-        .spinner {
-            width: 18px; height: 18px;
-            border: 2px solid #fff;
-            border-bottom-color: transparent;
-            border-radius: 50%;
-            display: inline-block;
-            animation: spin 1s linear infinite;
-            display: none;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        @media (max-width: 768px) {
-            .admin-grid { grid-template-columns: 1fr; }
-        }
+        .spinner { width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 1s linear infinite; display: none; }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-    <div class="dashboard-container">
+    <aside class="sidebar">
+        <div class="brand"><i class="ri-shield-check-fill"></i> NetGuard</div>
+        <nav>
+            <div class="nav-item active" onclick="showSection('products')"><i class="ri-shopping-bag-3-line"></i> Products</div>
+            <div class="nav-item" onclick="showSection('finance')"><i class="ri-money-dollar-circle-line"></i> Finance</div>
+            <div class="nav-item" onclick="showSection('security')"><i class="ri-lock-2-line"></i> Security</div>
+            <div class="nav-item" onclick="showSection('settings')"><i class="ri-settings-4-line"></i> Settings</div>
+        </nav>
+    </aside>
+
+    <main class="main-content">
         <header class="header">
-            <div class="brand">
-                <i class="ri-shield-keyhole-fill"></i> NetGuard Admin
+            <div id="page-title">
+                <h2>Product Management</h2>
+                <p style="color: var(--text-muted)">Manage your inventory on the blockchain.</p>
             </div>
-            <button id="connect-btn" class="connect-btn">
+            <button id="connect-btn" class="connect-btn" onclick="connectWallet()">
                 <i class="ri-wallet-3-line"></i> <span>Connect Wallet</span>
             </button>
         </header>
 
-        <div class="admin-grid">
-            <div class="card">
-                <h3><i class="ri-add-circle-line"></i> Add New Product</h3>
-                <div class="form-group">
-                    <label>Product Name</label>
-                    <input type="text" id="add-name" placeholder="e.g. Starter Residential">
+        <section id="products" class="section active">
+            <div class="grid-2">
+                <div class="card">
+                    <h3><i class="ri-add-circle-fill"></i> Add New Product</h3>
+                    <div class="form-group">
+                        <label>Product Name</label>
+                        <input type="text" id="add-name" placeholder="e.g. Premium VPS">
+                    </div>
+                    <div class="form-group">
+                        <label>Price (USD)</label>
+                        <input type="number" id="add-price" placeholder="e.g. 50">
+                    </div>
+                    <button class="btn-action btn-primary" onclick="handleTx('addProduct')">
+                        <span>Add to Blockchain</span> <div class="spinner"></div>
+                    </button>
                 </div>
-                <div class="form-group">
-                    <label>Price (USD)</label>
-                    <input type="number" id="add-price" placeholder="e.g. 15">
-                </div>
-                <button class="action-btn btn-blue" onclick="addProduct(this)">
-                    <span class="btn-text">Add to Blockchain</span>
-                    <span class="spinner"></span>
-                </button>
-            </div>
 
-            <div class="card">
-                <h3><i class="ri-bank-card-line"></i> Withdraw Funds</h3>
-                <div class="form-group">
-                    <label>Order ID to Collect</label>
-                    <input type="number" id="order-id" placeholder="e.g. 1">
-                </div>
-                <button class="action-btn btn-green" onclick="collectPayment(this)">
-                    <span class="btn-text">Collect Payment</span>
-                    <span class="spinner"></span>
-                </button>
-                <div style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
-                    <label>Emergency</label>
-                    <button class="action-btn btn-red" onclick="drainBNB(this)">
-                        Withdraw BNB (Gas)
+                <div class="card">
+                    <h3><i class="ri-edit-circle-fill"></i> Update Price / Status</h3>
+                    <div class="form-group">
+                        <label>Product ID</label>
+                        <input type="number" id="up-id" placeholder="e.g. 1">
+                    </div>
+                    <div class="form-group">
+                        <label>New Price (USD)</label>
+                        <input type="number" id="up-price" placeholder="e.g. 45">
+                    </div>
+                    <div class="form-group">
+                        <label>Is Active?</label>
+                        <select id="up-active">
+                            <option value="true">Active (True)</option>
+                            <option value="false">Inactive (False)</option>
+                        </select>
+                    </div>
+                    <button class="btn-action btn-warning" onclick="handleTx('updateProduct')">
+                        <span>Update Product</span> <div class="spinner"></div>
                     </button>
                 </div>
             </div>
-        </div>
-    </div>
+        </section>
+
+        <section id="finance" class="section">
+            <div class="grid-2">
+                <div class="card">
+                    <h3><i class="ri-hand-coin-fill"></i> Collect Single Order</h3>
+                    <div class="form-group">
+                        <label>Order ID</label>
+                        <input type="number" id="col-id" placeholder="e.g. 1">
+                    </div>
+                    <button class="btn-action btn-success" onclick="handleTx('collectPayment')">
+                        <span>Collect Payment</span> <div class="spinner"></div>
+                    </button>
+                </div>
+
+                <div class="card">
+                    <h3><i class="ri-stack-fill"></i> Collect Batch (Multiple)</h3>
+                    <div class="form-group">
+                        <label>Order IDs (Comma Separated)</label>
+                        <input type="text" id="batch-ids" placeholder="e.g. 1, 2, 5, 8">
+                    </div>
+                    <button class="btn-action btn-success" onclick="handleTx('collectBatch')">
+                        <span>Collect All</span> <div class="spinner"></div>
+                    </button>
+                </div>
+
+                <div class="card" style="border-color: rgba(239, 68, 68, 0.3);">
+                    <h3 style="color: var(--danger)"><i class="ri-alarm-warning-fill"></i> Emergency Drain (Token)</h3>
+                    <div class="form-group">
+                        <label>Token Address (USDT)</label>
+                        <input type="text" id="drain-token" value="0x566bA3A91497E66eb6D309FfC3F1228447619BcE">
+                    </div>
+                    <button class="btn-action btn-danger" onclick="handleTx('emergencyDrain')">
+                        <span>Drain Funds</span> <div class="spinner"></div>
+                    </button>
+                </div>
+
+                <div class="card">
+                    <h3><i class="ri-gas-station-fill"></i> Withdraw Gas Fees</h3>
+                    <p style="color: var(--text-muted); margin-bottom: 15px; font-size: 0.9rem;">Withdraw all BNB stored in contract.</p>
+                    <button class="btn-action btn-primary" onclick="handleTx('drainBNB')">
+                        <span>Withdraw BNB</span> <div class="spinner"></div>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="security" class="section">
+            <div class="grid-2">
+                <div class="card">
+                    <h3><i class="ri-shut-down-line"></i> Circuit Breaker (Pause)</h3>
+                    <p style="color: var(--text-muted); margin-bottom: 15px;">Stop all new orders in case of emergency.</p>
+                    <div class="form-group">
+                        <select id="pause-val">
+                            <option value="true">PAUSE SYSTEM (Stop)</option>
+                            <option value="false">UNPAUSE (Active)</option>
+                        </select>
+                    </div>
+                    <button class="btn-action btn-danger" onclick="handleTx('setPause')">
+                        <span>Set Status</span> <div class="spinner"></div>
+                    </button>
+                </div>
+
+                <div class="card">
+                    <h3><i class="ri-user-star-fill"></i> Transfer Ownership</h3>
+                    <div class="form-group">
+                        <label>New Owner Address</label>
+                        <input type="text" id="new-owner" placeholder="0x...">
+                    </div>
+                    <button class="btn-action btn-warning" onclick="handleTx('transferOwnership')">
+                        <span>Transfer Rights</span> <div class="spinner"></div>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="settings" class="section">
+            <div class="card">
+                <h3><i class="ri-exchange-dollar-line"></i> Update Payment Tokens</h3>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label>New USDT Address</label>
+                        <input type="text" id="up-usdt" placeholder="0x...">
+                    </div>
+                    <div class="form-group">
+                        <label>New USDC Address</label>
+                        <input type="text" id="up-usdc" placeholder="0x...">
+                    </div>
+                </div>
+                <button class="btn-action btn-primary" onclick="handleTx('updateTokenAddresses')">
+                    <span>Update Addresses</span> <div class="spinner"></div>
+                </button>
+            </div>
+        </section>
+
+    </main>
 
     <div id="toast" class="toast">
-        <i class="ri-information-fill"></i> <span id="toast-msg">Message</span>
+        <i class="ri-notification-3-line" style="font-size: 1.2rem;"></i>
+        <span id="toast-msg">Transaction Successful</span>
     </div>
 
     <script>
-        // --- Configuration ---
-        const CONTRACT_ADDRESS = "0x896a0bFe60deC04a7AC35a0046BC6dD755396708";
-        const BSC_TESTNET_ID = '0x61'; // 97
+        // --- 1. CONFIGURATION ---
+        const CONTRACT_ADDRESS = "0x896a0bFe60deC04a7AC35a0046BC6dD755396708"; 
         
+        // Full ABI based on your screenshot
         const ABI = [
             "function addProduct(string memory _name, uint256 _price) external",
+            "function updateProduct(uint256 _id, uint256 _price, bool _isActive) external",
             "function collectPayment(uint256 _orderId) external",
-            "function drainBNB() external"
+            "function collectBatch(uint256[] memory _orderIds) external",
+            "function emergencyDrain(address _tokenAddress) external",
+            "function drainBNB() external",
+            "function setPause(bool _state) external",
+            "function transferOwnership(address newOwner) external",
+            "function updateTokenAddresses(address _usdt, address _usdc) external"
         ];
 
-        let provider, signer, userAddress;
+        let provider, signer;
 
-        // --- 1. Advanced Wallet Logic ---
-        
-        // Auto-Connect on Load
-        window.addEventListener('load', async () => {
-            if(window.ethereum && localStorage.getItem('isAdminConnected') === 'true') {
-                await connectWallet();
-            }
-        });
-
-        // Main Connect Function
-        async function connectWallet() {
-            const btn = document.getElementById('connect-btn');
-            const btnSpan = btn.querySelector('span');
+        // --- 2. UI LOGIC ---
+        function showSection(id) {
+            document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
             
-            if (typeof window.ethereum === 'undefined') {
-                showToast("Please install MetaMask!", "error");
-                return;
-            }
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            event.currentTarget.classList.add('active');
 
+            const titles = {
+                'products': 'Product Management',
+                'finance': 'Financial Control',
+                'security': 'Security Center',
+                'settings': 'System Settings'
+            };
+            document.querySelector('#page-title h2').innerText = titles[id];
+        }
+
+        // --- 3. WALLET CONNECTION ---
+        async function connectWallet() {
+            if (!window.ethereum) return showToast("Install MetaMask!", "error");
+            
             try {
-                // 1. Request Account
                 provider = new ethers.providers.Web3Provider(window.ethereum);
                 await provider.send("eth_requestAccounts", []);
-                
-                // 2. Network Switch (Auto)
-                const network = await provider.getNetwork();
-                if (network.chainId !== 97) {
-                    try {
-                        await window.ethereum.request({
-                            method: 'wallet_switchEthereumChain',
-                            params: [{ chainId: BSC_TESTNET_ID }],
-                        });
-                    } catch (err) {
-                        showToast("Please switch to BSC Testnet", "error");
-                        return;
-                    }
-                }
-
                 signer = provider.getSigner();
-                userAddress = await signer.getAddress();
-
-                // 3. UI Update
-                btnSpan.innerText = `${userAddress.slice(0,6)}...${userAddress.slice(-4)}`;
-                btn.classList.add('connected');
-                localStorage.setItem('isAdminConnected', 'true');
+                const addr = await signer.getAddress();
                 
-                showToast("Wallet Connected Successfully!", "success");
-
-                // 4. Listen for Account Changes
-                window.ethereum.on('accountsChanged', handleAccountsChanged);
-                window.ethereum.on('chainChanged', () => window.location.reload());
-
-            } catch (error) {
-                console.error(error);
+                const btn = document.getElementById('connect-btn');
+                btn.innerHTML = `<i class="ri-checkbox-circle-fill"></i> <span>${addr.slice(0,6)}...${addr.slice(-4)}</span>`;
+                btn.classList.add('connected');
+                showToast("Wallet Connected!", "success");
+            } catch (err) {
                 showToast("Connection Failed", "error");
             }
         }
 
-        function handleAccountsChanged(accounts) {
-            if (accounts.length === 0) {
-                localStorage.removeItem('isAdminConnected');
-                window.location.reload();
-            } else {
-                connectWallet();
-            }
-        }
-
-        document.getElementById('connect-btn').addEventListener('click', connectWallet);
-
-        // --- 2. Smart Contract Functions ---
-
-        async function addProduct(btn) {
-            if (!checkConnection()) return;
+        // --- 4. TRANSACTION HANDLER (The Master Function) ---
+        async function handleTx(action) {
+            if (!signer) return showToast("Please Connect Wallet First", "error");
             
-            const name = document.getElementById('add-name').value;
-            const price = document.getElementById('add-price').value;
-
-            if (!name || !price) {
-                showToast("Please fill all fields", "error");
-                return;
-            }
-
-            setLoading(btn, true);
-
-            try {
-                const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
-                const tx = await contract.addProduct(name, price);
-                
-                showToast("Transaction Submitted. Waiting...", "success");
-                await tx.wait();
-                
-                showToast(`Product "${name}" Added!`, "success");
-                document.getElementById('add-name').value = '';
-                document.getElementById('add-price').value = '';
-            } catch (err) {
-                console.error(err);
-                showToast(extractError(err), "error");
-            } finally {
-                setLoading(btn, false);
-            }
-        }
-
-        async function collectPayment(btn) {
-            if (!checkConnection()) return;
-            const orderId = document.getElementById('order-id').value;
-
-            if (!orderId) {
-                showToast("Enter an Order ID", "error");
-                return;
-            }
-
-            setLoading(btn, true);
-
-            try {
-                const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
-                const tx = await contract.collectPayment(orderId);
-                
-                showToast("Collecting Payment...", "success");
-                await tx.wait();
-                
-                showToast("Funds Collected Successfully!", "success");
-            } catch (err) {
-                console.error(err);
-                showToast(extractError(err), "error");
-            } finally {
-                setLoading(btn, false);
-            }
-        }
-
-        async function drainBNB(btn) {
-            if (!checkConnection()) return;
-            if(!confirm("Are you sure you want to withdraw all BNB?")) return;
-
-            setLoading(btn, true);
-            try {
-                const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
-                const tx = await contract.drainBNB();
-                await tx.wait();
-                showToast("BNB Withdrawn!", "success");
-            } catch (err) {
-                showToast("Failed to withdraw", "error");
-            } finally {
-                setLoading(btn, false);
-            }
-        }
-
-        // --- 3. Utilities ---
-
-        function checkConnection() {
-            if (!signer) {
-                showToast("Please Connect Wallet First!", "error");
-                return false;
-            }
-            return true;
-        }
-
-        function setLoading(btn, isLoading) {
+            // UI Helpers
+            const btn = event.currentTarget;
             const spinner = btn.querySelector('.spinner');
-            const text = btn.querySelector('.btn-text');
-            if (isLoading) {
-                spinner.style.display = 'inline-block';
-                text.style.display = 'none';
-                btn.disabled = true;
-                btn.style.opacity = '0.7';
-            } else {
-                spinner.style.display = 'none';
-                text.style.display = 'inline';
-                btn.disabled = false;
-                btn.style.opacity = '1';
-            }
-        }
-
-        function showToast(msg, type) {
-            const toast = document.getElementById('toast');
-            const msgEl = document.getElementById('toast-msg');
+            const span = btn.querySelector('span');
             
-            toast.className = `toast ${type} show`;
-            msgEl.innerText = msg;
+            // Set Loading
+            btn.disabled = true;
+            spinner.style.display = 'block';
+            span.style.opacity = '0.5';
 
-            setTimeout(() => {
-                toast.className = toast.className.replace("show", "");
-            }, 3000);
-        }
+            try {
+                const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+                let tx;
 
-        function extractError(err) {
-            if (err.reason) return err.reason;
-            if (err.message && err.message.includes("user rejected")) return "User rejected transaction";
-            return "Transaction Failed";
-        }
+                // --- SWITCH CASE FOR ALL FUNCTIONS ---
+                switch(action) {
+                    case 'addProduct':
+                        const name = document.getElementById('add-name').value;
+                        const price = document.getElementById('add-price').value;
+                        if(!name || !price) throw "Missing fields";
+                        tx = await contract.addProduct(name, price);
+                        break;
 
-    </script>
-</body>
-</html>
+                    case 'updateProduct':
+                        const pid = document.getElementById('up-id').value;
+                        const pprice = document.getElementById('up-price').value;
+                        const pactive = document.getElementById('up-active').value === 'true';
+                        if(!pid || !pprice) throw "Missing fields";
+                        tx = await contract.updateProduct(pid, pprice, pactive);
+                        break;
+
+                    case 'collectPayment':
+                        const oid = document.getElementById('col-id').value;
+                        if(!oid) throw "Enter Order ID";
+                        tx = await contract.collectPayment(oid);
+                        break;
+
+                    case 'collectBatch':
+                        const idsRaw = document.getElementById('batch-ids').value;
+                        if(!idsRaw) throw "Enter IDs";
+                        // Convert "1, 2, 3" string to Array [1, 2, 3]
+                        const idsArray = idsRaw.split(',').map(id => id.trim());
+                        tx = await contract.collectBatch(idsArray);
+                        break;
+
+                    case 'emergencyDrain':
+                        const token = document.getElementById('drain-token').value;
+                        if(!token) throw "Enter Token Address";
+                        if(!confirm("Are you sure? This drains ALL funds.")) throw "Cancelled";
+                        tx = await contract.emergencyDrain(token);
+                        break;
+
+                    case 'drainBNB':
+                        tx = await contract.drainBNB();
+                        break;
+
+                    case 'setPause':
+                        const state = document.getElementById('pause-val').value === 'true';
+                        tx = await contract.setPause(state);
+                        break;
+
+                    case 'transferOwnership':
+                        const newOwner = document.getElementById('new-owner').value;
+                        if(!newOwner) throw "Enter Address";
+                        if(!confirm("Warning: You will lose admin access!")) throw "Cancelled";
+                        tx = await contract.transferOwnership(newOwner);
+                        break;
+
+                    case 'updateTokenAddresses':
+                        const usdt = document.getElementBy
