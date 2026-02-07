@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NetGuard Admin Panel</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <style>
+        body { font-family: sans-serif; background: #0f172a; color: white; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: #1e293b; padding: 30px; border-radius: 12px; }
+        h2 { border-bottom: 1px solid #334155; padding-bottom: 10px; margin-bottom: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; color: #94a3b8; }
+        input, select { width: 100%; padding: 10px; background: #0f172a; border: 1px solid #334155; color: white; border-radius: 6px; box-sizing: border-box; color: white;}
+        button { width: 100%; padding: 12px; background: #6366f1; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        button:hover { background: #4f46e5; }
+        .btn-green { background: #22c55e; }
+        .status { margin-top: 15px; text-align: center; font-size: 0.9rem; color: #fbbf24; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🛡️ Admin Control Panel</h2>
+    <button id="connect-btn">Connect Owner Wallet</button>
+    <p class="status" id="wallet-status">Not Connected</p>
+
+    <br><hr><br>
+
+    <h3>1. Add New Product (One Time Setup)</h3>
+    <div class="form-group">
+        <label>Product Name</label>
+        <input type="text" id="add-name" placeholder="e.g. Starter Residential">
+    </div>
+    <div class="form-group">
+        <label>Price ($)</label>
+        <input type="number" id="add-price" placeholder="e.g. 15">
+    </div>
+    <button class="btn-green" onclick="addProduct()">Add Product to Blockchain</button>
+
+    <br><hr><br>
+
+    <h3>2. Withdraw Funds</h3>
+    <div class="form-group">
+        <label>Order ID to Collect</label>
+        <input type="number" id="order-id" placeholder="Order ID (e.g. 1)">
+    </div>
+    <button onclick="collectPayment()">Collect Payment</button>
+
+    <p class="status" id="status-msg"></p>
+</div>
+
+<script>
+    // আপনার কন্ট্রাক্ট অ্যাড্রেস
+    const CONTRACT_ADDRESS = "0x896a0bFe60deC04a7AC35a0046BC6dD755396708";
+    
+    const ABI = [
+        "function addProduct(string memory _name, uint256 _price) external",
+        "function collectPayment(uint256 _orderId) external"
+    ];
+
+    let provider, signer;
+
+    // Connect Wallet
+    document.getElementById('connect-btn').addEventListener('click', async () => {
+        if (window.ethereum) {
+            provider = new ethers.providers.Web3Provider(window.ethereum);
+            await provider.send("eth_requestAccounts", []);
+            signer = provider.getSigner();
+            const address = await signer.getAddress();
+            document.getElementById('wallet-status').innerText = "Connected: " + address.slice(0,6) + "...";
+            document.getElementById('connect-btn').style.display = 'none';
+        } else {
+            alert("Install MetaMask!");
+        }
+    });
+
+    // Add Product Function
+    async function addProduct() {
+        if (!signer) return alert("Connect Wallet First!");
+        
+        const name = document.getElementById('add-name').value;
+        const price = document.getElementById('add-price').value;
+        const status = document.getElementById('status-msg');
+
+        if(!name || !price) return alert("Fill all fields!");
+
+        try {
+            const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+            status.innerText = "Adding Product...";
+            
+            const tx = await contract.addProduct(name, price);
+            status.innerText = "Waiting for confirmation...";
+            await tx.wait();
+            
+            status.innerText = `Success! Product "${name}" Added.`;
+            alert("Product Added Successfully!");
+        } catch (err) {
+            console.error(err);
+            status.innerText = "Error: " + (err.reason || err.message);
+        }
+    }
+
+    // Collect Payment Function
+    async function collectPayment() {
+        if (!signer) return alert("Connect Wallet First!");
+        const orderId = document.getElementById('order-id').value;
+        if(!orderId) return alert("Enter Order ID");
+
+        try {
+            const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+            const tx = await contract.collectPayment(orderId);
+            document.getElementById('status-msg').innerText = "Collecting Payment...";
+            await tx.wait();
+            alert("Payment Collected Successfully!");
+        } catch (err) {
+            console.error(err);
+            alert("Error: " + err.message);
+        }
+    }
+</script>
+
+</body>
+</html>
